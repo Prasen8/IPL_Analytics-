@@ -3,10 +3,9 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Flask](https://img.shields.io/badge/Flask-Web%20Framework-lightgrey)
 ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-Machine%20Learning-orange)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**Live Demo:** [Click here to view the live deployed app](https://your-render-url-goes-here.onrender.com) *(Replace with your Render URL)*
+**Live Demo:** [Click here to view the live deployed app](https://your-render-url-goes-here.onrender.com) 
 
 A comprehensive, end-to-end Machine Learning web application designed to predict outcomes and scores for Indian Premier League (IPL) cricket matches in real-time. Built with Python, Flask, and Scikit-Learn, this project uses historical IPL data to generate actionable insights, win probabilities, and advanced match analytics.
 
@@ -77,7 +76,7 @@ IPL-Analytics-Flask/
 ### 🌐 Connect With Me
 Developed with ❤️ by Prasen Nimje
 
-LinkedIn: linkedin.com/in/prasen-nimje
+LinkedIn: https://linkedin.com/in/prasen-nimje
 
 GitHub: github.com/Prasen8
 

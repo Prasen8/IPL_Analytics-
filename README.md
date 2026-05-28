@@ -27,7 +27,7 @@ A comprehensive, end-to-end Machine Learning web application designed to predict
 | `ipl_eda_insights.ipynb`      | 📊 Deep exploratory analysis — powerplay impact, venue patterns, chase win % by required run rate, head-to-head matrix                                                            | Mixed Audience           |
 | `ipl_win_predictor.ipynb`     | 🤖 Trains ML models (Logistic Regression, Random Forest, Gradient Boosting) to predict live chase win probability ball-by-ball. Includes calibration check and live match replay. | Technical                |
 | `ipl_awards_predictor.ipynb`  | 🏆 Predicts Orange Cap, Purple Cap, Most 4s, Most 6s — both for current season projection and next season using ML models trained on historical player data.                      | Technical                |
-| `ipl_playoff_predictor.ipynb` | 🎯 Predicts playoff qualification using Monte Carlo simulation (10K runs) and NRR-based scenario analysis.                                                                        | Technical                |
+
 
 ---
 

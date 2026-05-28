@@ -5,7 +5,7 @@
 ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-Machine%20Learning-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**Live Demo:** [Click here to view the live deployed app](https://your-render-url-goes-here.onrender.com) 
+**Live Demo:** [Click here to view the live deployed app](https://ipl-analytics-jx75.onrender.com) 
 
 A comprehensive, end-to-end Machine Learning web application designed to predict outcomes and scores for Indian Premier League (IPL) cricket matches in real-time. Built with Python, Flask, and Scikit-Learn, this project uses historical IPL data to generate actionable insights, win probabilities, and advanced match analytics.
 

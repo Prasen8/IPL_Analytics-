@@ -15,7 +15,7 @@ A comprehensive, end-to-end Machine Learning web application designed to predict
 
 | File              | Purpose                                                                                                                                                        |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `get_ipl_data.py` | Downloads ball-by-ball data from Cricsheet, cleans team names, engineers features (cumulative score, run rate, phase, etc.), and saves CSVs ready for analysis |
+| `IPL_Data.py` | Downloads ball-by-ball data from Cricsheet, cleans team names, engineers features (cumulative score, run rate, phase, etc.), and saves CSVs ready for analysis |
 
 ---
 

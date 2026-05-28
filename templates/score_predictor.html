@@ -1,0 +1,142 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h1 class="mb-4 text-center">📈 IPL Score Predictor</h1>
+
+<div class="d-flex justify-content-center align-items-center my-5" style="min-height: 150px;">
+    <img id="batting_logo_preview" src="" width="150" class="d-none img-fluid" alt="Batting Team">
+    <h1 id="vs_text" class="mx-5 fw-bold text-white d-none" style="font-size: 3rem;">VS</h1>
+    <img id="bowling_logo_preview" src="" width="150" class="d-none img-fluid" alt="Bowling Team">
+</div>
+
+<form method="POST" id="predictor-form">
+
+<div class="row">
+    <div class="col-md-6">
+        <label>Batting Team</label>
+        <select class="form-control" name="batting_team" id="batting_team">
+        {% for team in teams %}
+            <option value="{{ team }}" {% if request.form.get('batting_team') == team %}selected{% endif %}>{{ team }}</option>
+        {% endfor %}
+        </select>
+
+        <label class="mt-3">Bowling Team</label>
+        <select class="form-control" name="bowling_team" id="bowling_team">
+        {% for team in teams %}
+            <option value="{{ team }}" 
+                {% if request.form.get('bowling_team') == team %}selected
+                {% elif request.method == 'GET' and team == 'Chennai Super Kings' %}selected{% endif %}>
+                {{ team }}
+            </option>
+        {% endfor %}
+        </select>
+
+        <label class="mt-3">Venue</label>
+        <select class="form-control" name="venue">
+        {% for venue in venues %}
+            <option value="{{ venue }}" {% if request.form.get('venue') == venue %}selected{% endif %}>{{ venue }}</option>
+        {% endfor %}
+        </select>
+        
+        <label class="mt-3">Current Score</label>
+        <input type="number" class="form-control" name="current_score" value="{{ request.form.get('current_score', '') }}" required>
+    </div>
+
+    <div class="col-md-6">
+        <label>Overs Completed</label>
+        <input type="number" step="0.1" class="form-control" name="overs_completed" value="{{ request.form.get('overs_completed', '') }}" required>
+
+        <label class="mt-3">Wickets Lost</label>
+        <input type="number" class="form-control" name="wickets_lost" value="{{ request.form.get('wickets_lost', '') }}" required>
+
+        <label class="mt-3">Runs in Last 5 Overs</label>
+        <input type="number" class="form-control" name="runs_in_last_5_overs" value="{{ request.form.get('runs_in_last_5_overs', '') }}" required>
+
+        <label class="mt-3">Wickets in Last 5 Overs</label>
+        <input type="number" class="form-control" name="wickets_in_last_5_overs" value="{{ request.form.get('wickets_in_last_5_overs', '') }}" required>
+    </div>
+</div>
+
+<div class="text-center mt-5">
+    <button type="submit" class="btn btn-danger btn-lg w-25 fw-bold mx-2">
+        Predict Score
+    </button>
+    
+    <a href="/score-predictor" class="btn btn-secondary btn-lg w-25 fw-bold mx-2">
+        Reset Form
+    </a>
+</div>
+
+</form>
+
+{% if prediction %}
+
+<div class="card mt-5 p-4 shadow-lg text-white text-center border-0" style="background-color: #1e293b;">
+
+<h5 class="text-secondary mb-3">{{ request.form.get('batting_team') }} vs {{ request.form.get('bowling_team') }}</h5>
+
+<h2>🏏 Predicted Final Score: <span class="text-danger fw-bold">{{ prediction.predicted_score }}</span></h2>
+
+<hr class="my-4 border-secondary">
+
+<h4 class="text-info">
+Expected Range: {{ prediction.lower_bound }} to {{ prediction.upper_bound }}
+</h4>
+
+</div>
+
+{% endif %}
+
+<script>
+    // Hardcoded dictionary so you don't have to modify app.py!
+    const teamLogos = {
+        "Mumbai Indians": "mi.png",
+        "Chennai Super Kings": "csk.png",
+        "Royal Challengers Bangalore": "rcb.png",
+        "Kolkata Knight Riders": "kkr.png",
+        "Sunrisers Hyderabad": "srh.png",
+        "Delhi Capitals": "dc.png",
+        "Punjab Kings": "pbks.png",
+        "Rajasthan Royals": "rr.png",
+        "Lucknow Super Giants": "lsg.png",
+        "Gujarat Titans": "gt.png"
+    };
+    const staticImagePath = "{{ url_for('static', filename='images/') }}";
+
+    const battingSelect = document.getElementById('batting_team');
+    const bowlingSelect = document.getElementById('bowling_team');
+    const batLogo = document.getElementById('batting_logo_preview');
+    const bowlLogo = document.getElementById('bowling_logo_preview');
+    const vsText = document.getElementById('vs_text');
+
+    function updateDynamicLogos() {
+        const batTeam = battingSelect.value;
+        const bowlTeam = bowlingSelect.value;
+
+        if (batTeam && bowlTeam) {
+            batLogo.src = staticImagePath + teamLogos[batTeam];
+            bowlLogo.src = staticImagePath + teamLogos[bowlTeam];
+
+            batLogo.classList.remove('d-none');
+            bowlLogo.classList.remove('d-none');
+            vsText.classList.remove('d-none');
+        }
+    }
+
+    battingSelect.addEventListener('change', updateDynamicLogos);
+    bowlingSelect.addEventListener('change', updateDynamicLogos);
+
+    // Run once on load to show initial images
+    updateDynamicLogos();
+
+    // Prevent identical team selection
+    document.getElementById('predictor-form').addEventListener('submit', function(e) {
+        if (battingSelect.value === bowlingSelect.value) {
+            e.preventDefault(); 
+            alert("Error: Batting Team and Bowling Team cannot be the same!");
+        }
+    });
+</script>
+
+{% endblock %}

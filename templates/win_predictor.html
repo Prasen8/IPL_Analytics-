@@ -1,0 +1,167 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h1 class="mb-4 text-center">🏏 IPL Win Predictor</h1>
+
+<div class="d-flex justify-content-center align-items-center my-5" style="min-height: 150px;">
+    <img id="batting_logo_preview" src="" width="150" class="d-none img-fluid" alt="Batting Team">
+    <h1 id="vs_text" class="mx-5 fw-bold text-white d-none" style="font-size: 3rem;">VS</h1>
+    <img id="bowling_logo_preview" src="" width="150" class="d-none img-fluid" alt="Bowling Team">
+</div>
+
+<form method="POST" id="predictor-form">
+
+<div class="row">
+
+<div class="col-md-6">
+
+<label>Batting Team</label>
+<select class="form-control" name="batting_team" id="batting_team">
+{% for team in teams %}
+<option value="{{ team }}" {% if request.form.get('batting_team') == team %}selected{% endif %}>{{ team }}</option>
+{% endfor %}
+</select>
+
+<label class="mt-3">Bowling Team</label>
+<select class="form-control" name="bowling_team" id="bowling_team">
+{% for team in teams %}
+<option value="{{ team }}" 
+    {% if request.form.get('bowling_team') == team %}selected
+    {% elif request.method == 'GET' and team == 'Chennai Super Kings' %}selected{% endif %}>
+    {{ team }}
+</option>
+{% endfor %}
+</select>
+
+<label class="mt-3">Venue</label>
+<select class="form-control" name="venue">
+{% for venue in venues %}
+<option value="{{ venue }}" {% if request.form.get('venue') == venue %}selected{% endif %}>{{ venue }}</option>
+{% endfor %}
+</select>
+
+<label class="mt-3">Target</label>
+<input type="number" class="form-control" name="target" value="{{ request.form.get('target', '') }}" required>
+
+<label class="mt-3">Current Score</label>
+<input type="number" class="form-control" name="current_score" value="{{ request.form.get('current_score', '') }}" required>
+
+</div>
+
+<div class="col-md-6">
+
+<label>Runs Left</label>
+<input type="number" class="form-control" name="runs_left" value="{{ request.form.get('runs_left', '') }}" required>
+
+<label class="mt-3">Balls Left</label>
+<input type="number" class="form-control" name="balls_left" value="{{ request.form.get('balls_left', '') }}" required>
+
+<label class="mt-3">Wickets In Hand</label>
+<input type="number" class="form-control" name="wickets_in_hand" value="{{ request.form.get('wickets_in_hand', '') }}" required>
+
+<label class="mt-3">Runs Last 30 Balls</label>
+<input type="number" class="form-control" name="runs_last_30_balls" value="{{ request.form.get('runs_last_30_balls', '') }}" required>
+
+<label class="mt-3">Wickets Lost Last 30 Balls</label>
+<input type="number" class="form-control" name="wickets_last_30_balls" value="{{ request.form.get('wickets_last_30_balls', '') }}" required>
+
+</div>
+
+</div>
+
+<div class="text-center mt-5">
+    <button type="submit" class="btn btn-success btn-lg w-25 fw-bold mx-2">
+        Predict Match
+    </button>
+    
+    <a href="/win-predictor" class="btn btn-secondary btn-lg w-25 fw-bold mx-2">
+        Reset Form
+    </a>
+</div>
+
+</form>
+
+{% if prediction %}
+
+<div class="card mt-5 p-4 shadow-lg text-white text-center border-0" style="background-color: #1e293b;">
+
+<h2>🏆 Predicted Winner: <span class="text-warning">{{ prediction.winner }}</span></h2>
+
+<div class="my-4">
+    <img
+    src="{{ url_for('static', filename='images/' + prediction.winner_logo) }}"
+    width="220"
+    >
+</div>
+
+<div class="row mt-4">
+    <div class="col-6 border-end">
+        <h4>{{ prediction.batting_team }}</h4>
+        <h3 class="text-success">{{ prediction.batting_win }}%</h3>
+    </div>
+    <div class="col-6">
+        <h4>{{ prediction.bowling_team }}</h4>
+        <h3 class="text-danger">{{ prediction.bowling_win }}%</h3>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<div class="row">
+    <div class="col-4">
+        <h5>🔥 Pressure Meter</h5>
+        <p class="text-info">{{ prediction.pressure_status }}</p>
+    </div>
+    <div class="col-4 border-start border-end">
+        <h5>⚡ Momentum</h5>
+        <p class="text-info">{{ prediction.momentum }}</p>
+    </div>
+    <div class="col-4">
+        <h5>📈 Chase Difficulty</h5>
+        <p class="text-info">{{ prediction.difficulty }}</p>
+    </div>
+</div>
+
+</div>
+
+{% endif %}
+
+<script>
+    const teamLogos = {{ team_logos | tojson | safe }};
+    const staticImagePath = "{{ url_for('static', filename='images/') }}";
+
+    const battingSelect = document.getElementById('batting_team');
+    const bowlingSelect = document.getElementById('bowling_team');
+    const batLogo = document.getElementById('batting_logo_preview');
+    const bowlLogo = document.getElementById('bowling_logo_preview');
+    const vsText = document.getElementById('vs_text');
+
+    function updateDynamicLogos() {
+        const batTeam = battingSelect.value;
+        const bowlTeam = bowlingSelect.value;
+
+        if (batTeam && bowlTeam) {
+            batLogo.src = staticImagePath + teamLogos[batTeam];
+            bowlLogo.src = staticImagePath + teamLogos[bowlTeam];
+
+            batLogo.classList.remove('d-none');
+            bowlLogo.classList.remove('d-none');
+            vsText.classList.remove('d-none');
+        }
+    }
+
+    battingSelect.addEventListener('change', updateDynamicLogos);
+    bowlingSelect.addEventListener('change', updateDynamicLogos);
+
+    updateDynamicLogos();
+
+    document.getElementById('predictor-form').addEventListener('submit', function(e) {
+        if (battingSelect.value === bowlingSelect.value) {
+            e.preventDefault(); 
+            alert("Error: Batting Team and Bowling Team cannot be the same!");
+        }
+    });
+</script>
+
+{% endblock %}

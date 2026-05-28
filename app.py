@@ -1,67 +1,47 @@
-import streamlit as st
+import warnings
+from sklearn.exceptions import InconsistentVersionWarning
+
+warnings.simplefilter(
+    "ignore",
+    InconsistentVersionWarning
+)
+
+from flask import Flask, render_template, request
 import pandas as pd
 import joblib
-import plotly.express as px
 
-# ==========================
-# PAGE CONFIG
-# ==========================
+app = Flask(__name__)
 
-st.set_page_config(
-    page_title="IPL Analytics",
-    page_icon="🏏",
-    layout="wide"
-)
-
-# ==========================
+# =========================
 # LOAD MODELS
-# ==========================
+# =========================
 
-# Note: Ensure these files exist in your directory, otherwise Streamlit will throw a FileNotFoundError
-win_model = joblib.load("ipl_win_predictor_v2.pkl")
-score_model = joblib.load("score_predictor.pkl")
-
-# ==========================
-# SIDEBAR
-# ==========================
-
-page = st.sidebar.selectbox(
-    "Choose Module",
-    [
-        "🏏 Win Predictor",
-        "📈 Score Predictor"
-    ]
+win_model = joblib.load(
+    'models/ipl_win_predictor_v2.pkl'
 )
 
-teams = [
-    "Mumbai Indians",
-    "Chennai Super Kings",
-    "Royal Challengers Bangalore",
-    "Kolkata Knight Riders",
-    "Sunrisers Hyderabad",
-    "Delhi Capitals",
-    "Punjab Kings",
-    "Rajasthan Royals",
-    "Lucknow Super Giants",
-    "Gujarat Titans"
-]
+score_model = joblib.load(
+    'models/score_predictor.pkl'
+)
 
-# ==========================
+# =========================
 # TEAM LOGOS
-# ==========================
+# =========================
 
 team_logos = {
-    "Mumbai Indians": "assets/mi.png",
-    "Chennai Super Kings": "assets/csk.png",
-    "Royal Challengers Bangalore": "assets/rcb.png",
-    "Kolkata Knight Riders": "assets/kkr.png",
-    "Sunrisers Hyderabad": "assets/srh.png",
-    "Delhi Capitals": "assets/dc.png",
-    "Punjab Kings": "assets/pbks.png",
-    "Rajasthan Royals": "assets/rr.png",
-    "Lucknow Super Giants": "assets/lsg.png",
-    "Gujarat Titans": "assets/gt.png"
+    "Mumbai Indians": "mi.png",
+    "Chennai Super Kings": "csk.png",
+    "Royal Challengers Bangalore": "rcb.png",
+    "Kolkata Knight Riders": "kkr.png",
+    "Sunrisers Hyderabad": "srh.png",
+    "Delhi Capitals": "dc.png",
+    "Punjab Kings": "pk.png",
+    "Rajasthan Royals": "rr.png",
+    "Lucknow Super Giants": "lsg.png",
+    "Gujarat Titans": "gt.png"
 }
+
+teams = list(team_logos.keys())
 
 venues = [
     "Wankhede Stadium",
@@ -76,117 +56,69 @@ venues = [
     "Ekana Cricket Stadium"
 ]
 
-# ====================================================
+# =========================
+# HOME
+# =========================
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# =========================
 # WIN PREDICTOR
-# ====================================================
+# =========================
 
-if page == "🏏 Win Predictor":
+@app.route('/win-predictor', methods=['GET', 'POST'])
+def win_predictor():
 
-    st.title("🏏 IPL Win Predictor")
+    prediction = None
 
-    col1, col2 = st.columns(2)
+    if request.method == 'POST':
 
-    with col1:
+        batting_team = request.form['batting_team']
+        bowling_team = request.form['bowling_team']
+        venue = request.form['venue']
 
-        batting_team = st.selectbox("Batting Team", teams)
-        bowling_team = st.selectbox("Bowling Team", teams)
-        venue = st.selectbox("Venue", venues)
-        
-        # CORRECTED INDENTATION: Moved these inside 'with col1:'
-        logo1, vs, logo2 = st.columns([2,1,2])
+        target = int(request.form['target'])
+        current_score = int(request.form['current_score'])
+        runs_left = int(request.form['runs_left'])
+        balls_left = int(request.form['balls_left'])
+        wickets_in_hand = int(request.form['wickets_in_hand'])
+        runs_last_30_balls = int(request.form['runs_last_30_balls'])
+        wickets_last_30_balls = int(request.form['wickets_last_30_balls'])
 
-        with logo1:
-            st.image(team_logos[batting_team], width=140)
+        current_wickets = 10 - wickets_in_hand
 
-        with vs:
-            st.markdown(
-                "<h1 style='text-align:center;'>VS</h1>",
-                unsafe_allow_html=True
-            )
+        overs_completed = (120 - balls_left) / 6
 
-        with logo2:
-            st.image(team_logos[bowling_team], width=140)
+        crr = current_score / overs_completed if overs_completed > 0 else 0
 
-        target = st.number_input(
-            "Target Score",
-            min_value=1,
-            value=180
+        rrr = (runs_left * 6) / balls_left if balls_left > 0 else 0
+
+        run_rate_diff = crr - rrr
+
+        pressure = (
+            runs_left / wickets_in_hand
+            if wickets_in_hand > 0
+            else runs_left
         )
-
-        current_score = st.number_input(
-            "Current Score",
-            min_value=0,
-            value=120
-        )
-
-    with col2:
-
-        runs_left = st.number_input(
-            "Runs Left",
-            min_value=0,
-            value=60
-        )
-
-        balls_left = st.number_input(
-            "Balls Left",
-            min_value=1,
-            value=36
-        )
-
-        wickets_in_hand = st.slider(
-            "Wickets In Hand",
-            0,
-            10,
-            6
-        )
-
-        runs_last_30_balls = st.number_input(
-            "Runs Last 30 Balls",
-            min_value=0,
-            value=40
-        )
-
-        wickets_last_30_balls = st.slider(
-            "Wickets Lost Last 30 Balls",
-            0,
-            10,
-            1
-        )
-
-    current_wickets = 10 - wickets_in_hand
-
-    overs_completed = (120 - balls_left) / 6
-
-    crr = current_score / overs_completed if overs_completed > 0 else 0
-
-    rrr = (runs_left * 6) / balls_left if balls_left > 0 else 0
-
-    run_rate_diff = crr - rrr
-
-    pressure = (
-        runs_left / wickets_in_hand
-        if wickets_in_hand > 0
-        else runs_left
-    )
-
-    if st.button("Predict Win Probability"):
 
         input_df = pd.DataFrame({
-            "runs_left": [runs_left],
-            "balls_left": [balls_left],
-            "wickets_in_hand": [wickets_in_hand],
-            "crr": [crr],
-            "rrr": [rrr],
-            "run_rate_diff": [run_rate_diff],
-            "pressure": [pressure],
-            "current_score": [current_score],
-            "current_wickets": [current_wickets],
-            "target": [target],
-            "runs_last_30_balls": [runs_last_30_balls],
-            "wickets_last_30_balls": [wickets_last_30_balls],
-            "batting_team": [batting_team],
-            "bowling_team": [bowling_team],
-            "venue": [venue]
+            'runs_left': [runs_left],
+            'balls_left': [balls_left],
+            'wickets_in_hand': [wickets_in_hand],
+            'crr': [crr],
+            'rrr': [rrr],
+            'run_rate_diff': [run_rate_diff],
+            'pressure': [pressure],
+            'current_score': [current_score],
+            'current_wickets': [current_wickets],
+            'target': [target],
+            'runs_last_30_balls': [runs_last_30_balls],
+            'wickets_last_30_balls': [wickets_last_30_balls],
+            'batting_team': [batting_team],
+            'bowling_team': [bowling_team],
+            'venue': [venue]
         })
 
         result = win_model.predict_proba(input_df)
@@ -196,178 +128,143 @@ if page == "🏏 Win Predictor":
 
         winner = batting_team if batting_win > bowling_win else bowling_team
 
-        st.success(f"🏆 Predicted Winner: {winner}")
-        # Winner Logo
-        st.image(
-            team_logos[winner],
-            width=250,
-            caption=f"{winner} Predicted as Match Winner"
+        # Pressure Meter
+        pressure_index = rrr - crr
+
+        if pressure_index <= 1:
+            pressure_status = 'Low Pressure'
+        elif pressure_index <= 3:
+            pressure_status = 'Medium Pressure'
+        else:
+            pressure_status = 'High Pressure'
+
+        # Momentum
+        momentum_score = (
+            runs_last_30_balls - (wickets_last_30_balls * 10)
         )
 
-        col1, col2 = st.columns(2)
+        if momentum_score >= 40:
+            momentum = 'Strong Momentum'
+        elif momentum_score >= 20:
+            momentum = 'Positive Momentum'
+        else:
+            momentum = 'Slow Momentum'
 
-        with col1:
-            st.metric(batting_team, f"{batting_win}%")
+        # Chase Difficulty
+        if target <= 150:
+            difficulty = 'Easy Chase'
+        elif target <= 180:
+            difficulty = 'Balanced Match'
+        elif target <= 210:
+            difficulty = 'Tough Chase'
+        else:
+            difficulty = 'Very Difficult Chase'
 
-        with col2:
-            st.metric(bowling_team, f"{bowling_win}%")
+        prediction = {
+            'batting_win': batting_win,
+            'bowling_win': bowling_win,
+            'winner': winner,
+            'pressure_status': pressure_status,
+            'momentum': momentum,
+            'difficulty': difficulty,
+            'batting_team': batting_team,
+            'bowling_team': bowling_team,
+            'winner_logo': team_logos[winner]
+        }
 
-        chart_df = pd.DataFrame({
-            "Team": [batting_team, bowling_team],
-            "Probability": [batting_win, bowling_win]
-        })
-
-        fig = px.pie(
-            chart_df,
-            names="Team",
-            values="Probability",
-            title="Winning Probability"
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-# ====================================================
-# SCORE PREDICTOR
-# ====================================================
-
-elif page == "📈 Score Predictor":
-
-    st.title("📈 IPL First Innings Score Predictor")
-    st.markdown(
-        "Predict the final first-innings score using current match situation."
+    return render_template(
+        'win_predictor.html',
+        teams=teams,
+        venues=venues,
+        team_logos=team_logos,
+        prediction=prediction
     )
 
-    col1, col2 = st.columns(2)
+# =========================
+# SCORE PREDICTOR
+# =========================
 
-    with col1:
+@app.route('/score-predictor', methods=['GET', 'POST'])
+def score_predictor():
 
-        batting_team = st.selectbox(
-            "Batting Team",
-            teams,
-            key="score_batting_team"
+    prediction = None
+
+    if request.method == 'POST':
+
+        batting_team = request.form['batting_team']
+        bowling_team = request.form['bowling_team']
+        venue = request.form['venue']
+
+        current_score = int(request.form['current_score'])
+
+        overs_completed = float(
+            request.form['overs_completed']
         )
 
-        bowling_team = st.selectbox(
-            "Bowling Team",
-            [team for team in teams if team != batting_team],
-            key="score_bowling_team"
+        wickets_lost = int(
+            request.form['wickets_lost']
         )
 
-        venue = st.selectbox(
-            "Venue",
-            venues,
-            key="score_venue"
+        runs_in_last_5_overs = int(
+            request.form['runs_in_last_5_overs']
         )
 
-        current_score = st.number_input(
-            "Current Score",
-            min_value=0,
-            max_value=300,
-            value=85
+        wickets_in_last_5_overs = int(
+            request.form['wickets_in_last_5_overs']
         )
-
-    with col2:
-
-        overs_completed = st.slider(
-            "Overs Completed",
-            min_value=0.0,
-            max_value=20.0,
-            value=10.0,
-            step=0.1
-        )
-
-        wickets_lost = st.slider(
-            "Wickets Lost",
-            min_value=0,
-            max_value=10,
-            value=3
-        )
-
-        runs_in_last_5_overs = st.number_input(
-            "Runs Scored in Last 5 Overs",
-            min_value=0,
-            max_value=100,
-            value=40
-        )
-
-        wickets_in_last_5_overs = st.slider(
-            "Wickets Lost in Last 5 Overs",
-            min_value=0,
-            max_value=5,
-            value=1
-        )
-
-    st.divider()
-
-    if st.button("Predict Final Score", use_container_width=True):
 
         score_input = pd.DataFrame({
-            "current_score": [current_score],
-            "overs_completed": [overs_completed],
-            "wickets_lost": [wickets_lost],
-            "runs_in_last_5_overs": [runs_in_last_5_overs],
-            "wickets_in_last_5_overs": [wickets_in_last_5_overs],
-            "batting_team": [batting_team],
-            "bowling_team": [bowling_team],
-            "venue": [venue]
-        })
 
-        prediction = score_model.predict(score_input)
+            'current_score': [current_score],
 
-        predicted_score = int(round(prediction[0]))
+            'overs_completed': [overs_completed],
 
-        lower_bound = predicted_score - 10
-        upper_bound = predicted_score + 10
+            'wickets_lost': [wickets_lost],
 
-        st.success(
-            f"🏏 Predicted Final Score: {predicted_score}"
-        )
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.metric(
-                "Current Score",
-                current_score
-            )
-
-        with col2:
-            st.metric(
-                "Predicted Score",
-                predicted_score
-            )
-
-        with col3:
-            st.metric(
-                "Expected Range",
-                f"{lower_bound}-{upper_bound}"
-            )
-
-        progress = min(predicted_score / 250, 1.0)
-
-        st.progress(progress)
-
-        chart_df = pd.DataFrame({
-            "Metric": [
-                "Current Score",
-                "Predicted Final Score"
+            'runs_in_last_5_overs': [
+                runs_in_last_5_overs
             ],
-            "Runs": [
-                current_score,
-                predicted_score
-            ]
+
+            'wickets_in_last_5_overs': [
+                wickets_in_last_5_overs
+            ],
+
+            'batting_team': [batting_team],
+
+            'bowling_team': [bowling_team],
+
+            'venue': [venue]
+
         })
 
-        st.subheader("Score Comparison")
-
-        st.bar_chart(
-            chart_df.set_index("Metric")
+        predicted_score = int(
+            round(score_model.predict(score_input)[0])
         )
 
-        st.info(
-            f"📊 Estimated Final Score Range: "
-            f"{lower_bound} - {upper_bound}"
-        )
+        prediction = {
+            'predicted_score': predicted_score,
+            'lower_bound': predicted_score - 10,
+            'upper_bound': predicted_score + 10
+        }
+
+    return render_template(
+        'score_predictor.html',
+        prediction=prediction,
+        teams=teams,
+        venues=venues
+    )
+
+# =========================
+# ABOUT PAGE
+# =========================
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+# =========================
+# MAIN
+# =========================
+
+if __name__ == "__main__":
+    app.run(debug=True)

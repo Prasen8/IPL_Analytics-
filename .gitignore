@@ -1,9 +1,13 @@
+# Virtual Environment
 venv/
-__pycache__/
-.ipynb_checkpoints/
+env/
 
+# Python Cache
+__pycache__/
 *.pyc
 
-.env
-
+# Mac system files
 .DS_Store
+
+# Environment variables (if you add them later)
+.env

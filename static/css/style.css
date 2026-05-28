@@ -1,0 +1,23 @@
+body {
+    background-color: #0f172a;
+    color: white;
+}
+
+.hero-section {
+    margin-top: 100px;
+}
+
+.card {
+    background-color: #1e293b;
+    border-radius: 20px;
+}
+
+.btn {
+    border-radius: 12px;
+}
+
+input,
+select {
+    background-color: #111827 !important;
+    color: white !important;
+}
